@@ -57,6 +57,23 @@ app.get("/exemplo-salvar", async (req, res) => {
   }
 });
 
+// GET modifica dados somente para esta demonstração; em uma API real, use POST.
+let filaGravacoes = Promise.resolve();
+app.get("/gravar-mensagem-correta", (req, res) => {
+  const tarefa = filaGravacoes.then(async () => {
+    const lista = await lerMensagens();
+    const id = lista.reduce((maior, mensagem) => Math.max(maior, Number(mensagem.id) || 0), 0) + 1;
+    const mensagem = { id, usuario: "Exemplo", texto: "Gravado em arquivo!" };
+    await salvarMensagens([...lista, mensagem]);
+    return { aviso: "Mensagem gravada com sucesso!", mensagem, total: lista.length + 1 };
+  });
+  filaGravacoes = tarefa.catch(() => {});
+  tarefa.then(resultado => res.json(resultado)).catch(erro => {
+    console.error(erro);
+    res.status(500).json({ erro: "Erro ao gravar arquivo." });
+  });
+});
+
 // — [SPRINT 01 — SERVIDOR: iniciado na porta 3000; mantido ao longo das aulas] —
 app.listen(PORT, () => {console.log(`Servidor em http://localhost:${PORT}`);
 });
